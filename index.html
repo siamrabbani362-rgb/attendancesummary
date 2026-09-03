@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Taker</title>
+    <meta name="description" content="Fast attendance tracking web app with single-click all-present options, MCQ-style tickmarks, and an absent list copy modal." />
+    <meta property="og:title" content="Attendance Taker" />
+    <meta property="og:description" content="Fast attendance tracking web app with single-click all-present options, MCQ-style tickmarks, and an absent list copy modal." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-[#f8fafc] text-[#1e293b] font-sans pb-24 selection:bg-blue-100 selection:text-blue-900 flex flex-col">
+    <!-- High Density Sticky Header -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+        <!-- Brand & Class Name -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <input
+              id="class-name-input"
+              type="text"
+              aria-label="Class Name"
+              class="text-sm font-bold text-slate-800 bg-transparent border-none p-0 focus:ring-0 focus:outline-hidden hover:bg-slate-50 rounded px-1 -ml-1 w-44 sm:w-64 truncate"
+              value="CSE-2025 Attendance"
+            />
+            <div class="text-[11px] text-slate-400 font-mono -mt-0.5">
+              Section B • 50 Students
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Picker, Bulk Select, and Export Action -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div class="relative hidden sm:block">
+            <input
+              id="date-picker"
+              type="date"
+              aria-label="Attendance Date"
+              class="text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md px-2.5 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
+
+          <button
+            id="header-select-all-btn"
+            type="button"
+            class="hidden md:inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Select All</span>
+          </button>
+
+          <button
+            id="header-clear-all-btn"
+            type="button"
+            class="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+          >
+            <span>Clear</span>
+          </button>
+
+          <button
+            id="header-export-absent-btn"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
+          >
+            <span>Export Absent</span>
+            <span id="header-absent-badge" class="bg-blue-700 px-1.5 py-0.2 rounded-sm text-[11px] font-mono">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 space-y-3">
+      <!-- Toolbar / Action Bar -->
+      <div class="bg-white border border-slate-200 rounded-lg p-2.5 sm:p-3 shadow-xs space-y-2.5">
+        <!-- Quick Action Buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button
+              id="mark-all-present-btn"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-xs cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>1-Click All Present</span>
+            </button>
+
+            <button
+              id="mark-all-absent-btn"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+            >
+              <span>Clear All</span>
+            </button>
+
+            <button
+              id="reset-attendance-btn"
+              type="button"
+              class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <button
+            id="open-absent-modal-btn"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Pop Up Absent List</span>
+            <span class="absent-count-badge bg-blue-700 px-1.5 py-0.2 rounded-sm text-[11px] font-mono">0</span>
+          </button>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <div class="relative flex-1 max-w-sm">
+            <input
+              id="search-input"
+              type="text"
+              placeholder="Search roll or name..."
+              class="w-full pl-8 pr-3 py-1.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:bg-white"
+            />
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md border border-slate-200 self-start sm:self-auto">
+            <button
+              id="filter-all"
+              type="button"
+              class="px-2.5 py-1 text-xs font-semibold rounded transition-colors text-slate-800 bg-white shadow-xs cursor-pointer"
+            >
+              All (50)
+            </button>
+            <button
+              id="filter-present"
+              type="button"
+              class="px-2.5 py-1 text-xs font-semibold rounded transition-colors text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Present (50)
+            </button>
+            <button
+              id="filter-absent"
+              type="button"
+              class="px-2.5 py-1 text-xs font-semibold rounded transition-colors text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Absent (0)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Single Column Attendance List -->
+      <div class="w-full space-y-2">
+        <!-- Table Column Header with Separated P and A Columns -->
+        <div class="bg-slate-100 border border-slate-200 rounded-lg px-3 sm:px-4 py-2 flex items-center justify-between text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 select-none">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span>Student (Roll & Name)</span>
+            <span id="list-count" class="text-slate-400 font-normal font-mono">(50)</span>
+            <span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium lowercase tracking-normal text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+              <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+              click row to toggle (Absent ⇋ Present)
+            </span>
+          </div>
+
+          <div class="flex items-center gap-6 sm:gap-10 shrink-0 pl-2">
+            <div class="w-16 sm:w-20 text-center text-blue-700 font-bold">
+              Present (P)
+            </div>
+            <div class="w-16 sm:w-20 text-center text-rose-700 font-bold">
+              Absent (A)
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty Search / Filter State -->
+        <div id="students-empty-state" class="py-12 text-center bg-white rounded-lg border border-slate-200 text-slate-500 hidden">
+          <p class="text-sm font-medium">No students match your filter or search query.</p>
+          <button
+            id="clear-filter-btn"
+            type="button"
+            class="mt-2 text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <!-- Student Cards Container -->
+        <div id="students-container" class="flex flex-col gap-1.5 sm:gap-2">
+          <!-- Dynamically populated via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Absent Roll & Name Section at End -->
+      <section
+        id="absent-summary-section"
+        class="mt-6 bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-5"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              Absent Students Text Box
+              <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-rose-100 text-rose-700">
+                <span class="absent-count-badge">0</span> Absent
+              </span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Copy absent roll numbers and names directly for records, WhatsApp, or reports.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="open-modal-from-end"
+              type="button"
+              class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors cursor-pointer"
+            >
+              Open Pop-Up Modal
+            </button>
+          </div>
+        </div>
+
+        <!-- Format Options -->
+        <div class="pt-3 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase mr-1">Format:</span>
+            <button
+              type="button"
+              data-format="roll_name"
+              class="end-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-blue-600 text-white border-blue-600 shadow-xs"
+            >
+              Roll & Name
+            </button>
+            <button
+              type="button"
+              data-format="roll_only"
+              class="end-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+            >
+              Rolls Only
+            </button>
+            <button
+              type="button"
+              data-format="comma_rolls"
+              class="end-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+            >
+              Comma Separated
+            </button>
+            <button
+              type="button"
+              data-format="detailed_summary"
+              class="end-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+            >
+              Summary
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="download-end-btn"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition-colors cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Save .txt</span>
+            </button>
+
+            <button
+              id="copy-end-btn"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-md shadow-xs transition-all cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span>Copy Absent List</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="mt-3">
+          <textarea
+            id="absent-end-textarea"
+            readonly
+            rows="6"
+            class="w-full p-3.5 font-mono text-xs sm:text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-y selection:bg-blue-100 selection:text-blue-900"
+            placeholder="Absent rolls will appear here..."
+          ></textarea>
+        </div>
+
+        <div id="absent-end-empty-alert" class="mt-2.5 flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs border border-emerald-200 font-medium">
+          <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>All students are present today! No absentees to copy.</span>
+        </div>
+      </section>
+    </main>
+
+    <!-- High Density Sticky Bottom Status & Action Bar -->
+    <footer class="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 text-white shadow-lg">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between gap-4">
+        <!-- Telemetry Stats -->
+        <div class="flex items-center gap-3 sm:gap-6 text-xs font-medium">
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <span>Total:</span>
+            <span class="text-white font-mono font-bold">50</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Present:</span>
+            <span id="bottom-present-count" class="text-emerald-400 font-mono font-bold">50</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span>Absent:</span>
+            <span id="bottom-absent-count" class="text-rose-400 font-mono font-bold">0</span>
+          </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="flex items-center gap-2">
+          <button
+            id="floating-mark-all-present"
+            type="button"
+            class="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+          >
+            <span>Select All</span>
+          </button>
+
+          <button
+            id="floating-pop-absent-list"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shadow-xs"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export Absent (0)</span>
+          </button>
+
+          <button
+            id="scroll-to-top-btn"
+            type="button"
+            title="Scroll to top"
+            class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer ml-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Absent Students Pop-Up Modal -->
+    <div
+      id="absent-modal"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-3 sm:p-4 hidden"
+    >
+      <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <!-- Modal Header -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                Export Absent Students
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">
+                  <span class="absent-count-badge">0</span> Absent
+                </span>
+              </h2>
+              <p id="modal-date-info" class="text-xs text-slate-400">
+                CSE-2025 Attendance
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="close-modal-btn"
+            type="button"
+            class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-4 sm:p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                data-format="roll_name"
+                class="modal-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-blue-600 text-white border-blue-600 shadow-xs"
+              >
+                Roll & Name
+              </button>
+              <button
+                type="button"
+                data-format="roll_only"
+                class="modal-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+              >
+                Rolls Only
+              </button>
+              <button
+                type="button"
+                data-format="comma_rolls"
+                class="modal-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+              >
+                Comma Separated
+              </button>
+              <button
+                type="button"
+                data-format="detailed_summary"
+                class="modal-format-btn px-2.5 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+              >
+                Summary
+              </button>
+            </div>
+
+            <button
+              id="modal-select-all-text-btn"
+              type="button"
+              class="text-xs text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
+            >
+              Select All Text
+            </button>
+          </div>
+
+          <div>
+            <textarea
+              id="absent-modal-textarea"
+              readonly
+              rows="8"
+              class="w-full p-3 font-mono text-xs sm:text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-y selection:bg-blue-100 selection:text-blue-900"
+            ></textarea>
+          </div>
+
+          <div id="absent-modal-empty-alert" class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-medium hidden">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>All students are present today! No absentees to copy.</span>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div id="modal-stats-text" class="text-xs text-slate-500">
+            <strong>0</strong> absent of 50
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              id="modal-download-btn"
+              type="button"
+              class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Save .txt</span>
+            </button>
+
+            <button
+              id="modal-copy-btn"
+              type="button"
+              class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span>Copy to Clipboard</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Script (Pure HTML + CSS + JS) -->
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "Attendance Taker",
+  "description": "Fast attendance tracking web app with single-click all-present options, MCQ-style tickmarks, and an absent list copy modal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
